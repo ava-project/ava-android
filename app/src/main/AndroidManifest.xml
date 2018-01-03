@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.jeansarda.avacompanion">
+
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity android:name=".pairing.PairingMainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".pairing.websocket.PairingWebsocketActivity" />
+        <activity android:name=".recording.analog.RecordingAnalogActivity" />
+        <activity android:name=".recording.websocket.RecordingWebsocketActivity" />
+        <activity android:name=".pairing.analog.PairingAnalogMainActivity" />
+        <activity android:name=".pairing.analog.PairingAnalogMacOSActivity" />
+        <activity android:name=".pairing.analog.PairingAnalogWindowsActivity" />
+        <activity android:name=".pairing.analog.PairingAnalogLinuxActivity"></activity>
+    </application>
+
+</manifest>
