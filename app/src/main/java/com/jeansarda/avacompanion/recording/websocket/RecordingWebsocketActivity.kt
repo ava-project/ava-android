@@ -1,6 +1,8 @@
 package com.jeansarda.avacompanion.recording.websocket
 
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioFormat.*
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.support.v7.app.AppCompatActivity
@@ -9,6 +11,9 @@ import android.os.Environment
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.util.Log
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -21,8 +26,11 @@ import cafe.adriel.androidaudioconverter.AndroidAudioConverter
 import cafe.adriel.androidaudioconverter.callback.IConvertCallback
 import cafe.adriel.androidaudioconverter.model.AudioFormat
 import com.jeansarda.avacompanion.R
+import com.jeansarda.avacompanion.SettingsActivity
+import com.jeansarda.avacompanion.pairing.analog.PairingAnalogWindowsActivity
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
+import java.nio.ByteBuffer
 
 
 class RecordingWebsocketActivity : AppCompatActivity() {
@@ -42,11 +50,12 @@ class RecordingWebsocketActivity : AppCompatActivity() {
         title = "Recording"
         supportActionBar?.title = "Recording"
 
+
         ipAddress = intent.getStringExtra("address")
         //ipAddress = savedInstanceState
         Log.d("WS_ADDR", ipAddress)
 
-        FILENAME += Environment.getExternalStorageDirectory().absolutePath + "/avarecording.mp3"
+        FILENAME += Environment.getExternalStorageDirectory().absolutePath + "/avarecording.wav"
         Log.d("WRITING ON", FILENAME)
 
 
@@ -96,7 +105,8 @@ class RecordingWebsocketActivity : AppCompatActivity() {
                 Log.d("ERROR", e.localizedMessage)
                 isRecording = false
             }*/
-            ar = AudioRecord(MediaRecorder.AudioSource.MIC, 44100, 16, 2, 10)
+            val bufferSize = AudioRecord.getMinBufferSize(44100, CHANNEL_IN_MONO, ENCODING_PCM_16BIT)
+            ar = AudioRecord(MediaRecorder.AudioSource.MIC, 44100, CHANNEL_IN_MONO, ENCODING_PCM_16BIT, bufferSize)
             try {
                 ar!!.startRecording()
                 val recordingThread = Thread(Runnable {
@@ -138,13 +148,15 @@ class RecordingWebsocketActivity : AppCompatActivity() {
                 // // writes the data to file from buffer
                 // // stores the voice buffer
                 //val bData = short2byte(sData)
-                os!!.write(sData as ByteArray, 0, 1024 * 2)
+
+                os!!.write(shortsToBytes(sData), 0, 1024 * 2)
             } catch (e: IOException) {
                 e.printStackTrace()
             }
 
         }
         try {
+            println("Closing file")
             os!!.close()
         } catch (e: IOException) {
             e.printStackTrace()
@@ -152,6 +164,20 @@ class RecordingWebsocketActivity : AppCompatActivity() {
 
     }
 
+    fun shortsToBytes(shorts: ShortArray): ByteArray {
+        var bytes = ByteArray(2048)
+        var index: Int = 0
+        for (short in shorts) {
+            var buffer = ByteBuffer.allocate(2);
+            buffer.putShort(short);
+            val array = buffer.array()
+
+            bytes.set(index, array[0])
+            bytes.set(index + 1, array[1])
+            index += 2
+        }
+        return bytes
+    }
 
     private fun stopRecording() {
         ar!!.stop()
@@ -164,9 +190,9 @@ class RecordingWebsocketActivity : AppCompatActivity() {
     private fun startPlaying() {
         statusTextView.text = "Ready to record"
 
-
+        Log.d("FILENAME : ", FILENAME)
         val aacFile = File(FILENAME)
-        val callback = object : IConvertCallback {
+        /*val callback = object : IConvertCallback {
             override fun onSuccess(convertedFile: File) {
                 // So fast? Love it!
                 Log.d("CONVERSION", "success")
@@ -185,7 +211,7 @@ class RecordingWebsocketActivity : AppCompatActivity() {
 
             override fun onFailure(error: Exception) {
                 // Oops! Something went wrong
-                Log.d("CONVERSION", "error")
+                Log.d("CONVERSION", error.localizedMessage)
             }
         }
         AndroidAudioConverter.with(this)
@@ -199,14 +225,31 @@ class RecordingWebsocketActivity : AppCompatActivity() {
                 .setCallback(callback)
 
                 // Start conversion
-                .convert()
+                .convert()*/
+        val get = AsyncHttpGet("http://" + ipAddress)
+        AsyncHttpClient.getDefaultInstance().websocket(get, "a-protocol", AsyncHttpClient.WebSocketConnectCallback { ex, webSocket ->
+            if (ex != null) {
+                Log.d("ERRORRRRR", ex.localizedMessage)
+                //statusTextView.text = "Could not connect to " + ipAddress
+            } else {
+                Log.d("COOOL", "sending")
+                webSocket.send(aacFile.readBytes())
+            }
+        })
 
     }
 
     private fun requestPermission() {
         val permCheck = ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO)
+        val readCheck = ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE)
         if (permCheck == PackageManager.PERMISSION_DENIED) {
             ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.RECORD_AUDIO), 62621)
+        } else {
+            recordButton.isEnabled = true
+            statusTextView.text = "Ready to record"
+        }
+        if (readCheck == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), 62622)
         } else {
             recordButton.isEnabled = true
             statusTextView.text = "Ready to record"
@@ -226,6 +269,17 @@ class RecordingWebsocketActivity : AppCompatActivity() {
         }
 
 
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.recording_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        var intent = Intent(this, SettingsActivity::class.java)
+        startActivity(intent)
+        return true
     }
 
 

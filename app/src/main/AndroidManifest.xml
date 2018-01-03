@@ -26,7 +26,8 @@
         <activity android:name=".pairing.analog.PairingAnalogMainActivity" />
         <activity android:name=".pairing.analog.PairingAnalogMacOSActivity" />
         <activity android:name=".pairing.analog.PairingAnalogWindowsActivity" />
-        <activity android:name=".pairing.analog.PairingAnalogLinuxActivity"></activity>
+        <activity android:name=".pairing.analog.PairingAnalogLinuxActivity" />
+        <activity android:name=".SettingsActivity"></activity>
     </application>
 
 </manifest>
