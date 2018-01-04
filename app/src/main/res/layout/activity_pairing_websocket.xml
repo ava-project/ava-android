@@ -21,10 +21,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="30dp"
+        android:digits="0123456789.:"
         android:ems="10"
         android:hint="IP address"
-        android:inputType="number|numberDecimal"
-        android:digits="0123456789.:"
         app:layout_constraintBottom_toTopOf="@+id/connect_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

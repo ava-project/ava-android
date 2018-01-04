@@ -18,8 +18,6 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import com.koushikdutta.async.http.AsyncHttpClient
-import java.io.File
-import java.io.IOException
 import com.koushikdutta.async.http.AsyncHttpGet
 import cafe.adriel.androidaudioconverter.callback.ILoadCallback
 import cafe.adriel.androidaudioconverter.AndroidAudioConverter
@@ -28,9 +26,9 @@ import cafe.adriel.androidaudioconverter.model.AudioFormat
 import com.jeansarda.avacompanion.R
 import com.jeansarda.avacompanion.SettingsActivity
 import com.jeansarda.avacompanion.pairing.analog.PairingAnalogWindowsActivity
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
+import java.io.*
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 
 class RecordingWebsocketActivity : AppCompatActivity() {
@@ -55,7 +53,7 @@ class RecordingWebsocketActivity : AppCompatActivity() {
         //ipAddress = savedInstanceState
         Log.d("WS_ADDR", ipAddress)
 
-        FILENAME += Environment.getExternalStorageDirectory().absolutePath + "/avarecording.wav"
+        FILENAME += Environment.getExternalStorageDirectory().absolutePath + "/avarecording.pcm"
         Log.d("WRITING ON", FILENAME)
 
 
@@ -93,8 +91,8 @@ class RecordingWebsocketActivity : AppCompatActivity() {
         if (pm.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)) {
             /*mr = MediaRecorder()
             mr!!.setAudioSource(MediaRecorder.AudioSource.MIC)
-            mr!!.setOutputFormat(MediaRecorder.OutputFormat.MPEG_2_TS)
-            mr!!.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            mr!!.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT)
+            mr!!.setAudioEncoder(MediaRecorder.AudioEncoder.)
             mr!!.setOutputFile(FILENAME)
             try {
                 mr!!.prepare()
@@ -192,40 +190,14 @@ class RecordingWebsocketActivity : AppCompatActivity() {
 
         Log.d("FILENAME : ", FILENAME)
         val aacFile = File(FILENAME)
-        /*val callback = object : IConvertCallback {
-            override fun onSuccess(convertedFile: File) {
-                // So fast? Love it!
-                Log.d("CONVERSION", "success")
-                val get = AsyncHttpGet("http://" + ipAddress)
 
-                AsyncHttpClient.getDefaultInstance().websocket(get, "a-protocol", AsyncHttpClient.WebSocketConnectCallback { ex, webSocket ->
-                    if (ex != null) {
-                        Log.d("ERRORRRRR", ex.localizedMessage)
-                        //statusTextView.text = "Could not connect to " + ipAddress
-                    } else {
-                        Log.d("COOOL", "sending")
-                        webSocket.send(convertedFile.readBytes())
-                    }
-                })
-            }
-
-            override fun onFailure(error: Exception) {
-                // Oops! Something went wrong
-                Log.d("CONVERSION", error.localizedMessage)
-            }
+        val wavFile = File(FILENAME + ".wav")
+        try {
+            WAVEWriter().rawToWave(aacFile, wavFile)
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
-        AndroidAudioConverter.with(this)
-                // Your current audio file
-                .setFile(aacFile)
-
-                // Your desired audio format
-                .setFormat(AudioFormat.WAV)
-
-                // An callback to know when conversion is finished
-                .setCallback(callback)
-
-                // Start conversion
-                .convert()*/
+        Log.d("TARGET URL: ", "http://" + ipAddress)
         val get = AsyncHttpGet("http://" + ipAddress)
         AsyncHttpClient.getDefaultInstance().websocket(get, "a-protocol", AsyncHttpClient.WebSocketConnectCallback { ex, webSocket ->
             if (ex != null) {
@@ -233,7 +205,9 @@ class RecordingWebsocketActivity : AppCompatActivity() {
                 //statusTextView.text = "Could not connect to " + ipAddress
             } else {
                 Log.d("COOOL", "sending")
-                webSocket.send(aacFile.readBytes())
+
+                webSocket.send(wavFile.readBytes())
+                //webSocket.send(aacFile.readBytes())
             }
         })
 
