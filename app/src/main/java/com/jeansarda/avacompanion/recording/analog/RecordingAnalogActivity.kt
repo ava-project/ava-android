@@ -12,6 +12,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import com.jeansarda.avacompanion.R
+import com.jeansarda.avacompanion.recording.websocket.WAVEWriter
 import java.io.IOException
 
 class RecordingAnalogActivity : AppCompatActivity() {
@@ -87,6 +88,9 @@ class RecordingAnalogActivity : AppCompatActivity() {
     private fun startPlaying() {
         statusTextView.text = "Transmitting"
         val mp = MediaPlayer()
+        //mp.setAudioAttributes(AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+        WAVEWriter().forceRouteHeadset(true)
+        //mp.setAudioStreamType(AudioManager.STREAM_VOICE_CALL)
         mp.setDataSource(FILENAME)
         mp.prepare()
         mp.start()
